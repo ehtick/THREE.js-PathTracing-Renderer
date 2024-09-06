@@ -122,7 +122,7 @@ function initSceneData()
 	// pixelRatio is resolution - range: 0.5(half resolution) to 1.0(full resolution)
 	pixelRatio = mouseControl ? 0.7 : 0.7;
 
-	EPS_intersect = 0.001;
+	EPS_intersect = 0.01;
 
 	// set camera's field of view
 	worldCamera.fov = 50;
