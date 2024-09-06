@@ -276,7 +276,7 @@ function initSceneData()
 		totalNumberOfShapes += 3;
 	} // end for (let i = 91; i < 820; i++)
 
-
+/* 
 	// ITERATION 5, will result in 1 root parent sphere + 9 + (9*9) + (9*9*9) + (9*9*9*9) + (9*9*9*9*9) child spheres = 66,430 total spheres
 	parentSphereScale = currentSphereScale;
 	currentSphereScale *= (1 / 3);
@@ -327,7 +327,7 @@ function initSceneData()
 		totalNumberOfShapes += 3;
 	} // end for (let i = 820; i < 7381; i++)
 
-
+ */
 
 
 	console.log("Shape count: " + totalNumberOfShapes);
@@ -467,7 +467,7 @@ function initSceneData()
 	// In addition to the default GUI on all demos, add any special GUI elements that this particular demo requires
 
 	material_TypeObject = {
-		Sphereflake_Material: 'Diffuse'
+		Sphereflake_Material: 'ClearCoat Diffuse'
 	};
 	
 	function handleMaterialTypeChange() 
@@ -483,7 +483,7 @@ function initSceneData()
 	// scene/demo-specific uniforms go here
 	pathTracingUniforms.tShape_DataTexture = { value: shapeDataTexture };
 	pathTracingUniforms.tAABB_DataTexture = { value: aabbDataTexture };
-	pathTracingUniforms.uMaterialType = { value: 1 };
+	pathTracingUniforms.uMaterialType = { value: 4 };
 
 
 } // end function initSceneData()
