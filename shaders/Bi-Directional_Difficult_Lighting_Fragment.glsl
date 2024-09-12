@@ -28,7 +28,7 @@ vec3 rayOrigin, rayDirection;
 vec3 hitNormal, hitEmission, hitColor;
 vec2 hitUV;
 float hitRoughness;
-float hitObjectID;
+float hitObjectID = -INFINITY;
 int hitTextureID;
 int hitType = -100;
 int hitIsModel = FALSE;
@@ -109,7 +109,7 @@ void GetBoxNodeData(const in float i, inout vec4 boxNodeData0, inout vec4 boxNod
 
 
 //--------------------------------------------------------------------------------------------------------
-float SceneIntersect( int checkModels )
+float SceneIntersect(int checkModels)
 //--------------------------------------------------------------------------------------------------------
 {
 	vec4 currentBoxNodeData0, nodeAData0, nodeBData0, tmpNodeData0;
@@ -141,6 +141,7 @@ float SceneIntersect( int checkModels )
 	int skip = FALSE;
 	int triangleLookupNeeded = FALSE;
 	int isRayExiting = FALSE;
+
 
 
 	d = BoxIntersect( boxes[0].minCorner, boxes[0].maxCorner, rayOrigin, rayDirection, normal, isRayExiting );
@@ -394,12 +395,12 @@ float SceneIntersect( int checkModels )
 		hitObjectID = float(objectCount);
 	}
 	objectCount++;
-	
+
 
 	if (checkModels == FALSE)
 		return t;
 
-	
+
 	GetBoxNodeData(stackptr, currentBoxNodeData0, currentBoxNodeData1);
 	currentStackData = vec2(stackptr, BoundingBoxIntersect(currentBoxNodeData0.yzw, currentBoxNodeData1.yzw, rayOrigin, inverseDir));
 	stackLevels[0] = currentStackData;
@@ -546,9 +547,10 @@ float SceneIntersect( int checkModels )
 		hitIsModel = TRUE;
 	} // end if (triangleLookupNeeded == TRUE)
 	
+	
 	return t;
 	
-} // end SceneIntersect( int checkModels )
+} // end SceneIntersect(int checkModels)
 
 
 
@@ -568,28 +570,27 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 	vec3 checkCol0 = vec3(0.01);
 	vec3 checkCol1 = vec3(1.0);
 	vec3 nl, n, x;
-	vec3 tdir;
 	vec3 dirToLight;
 
 	vec2 sampleUV;
 	
 	float nc, nt, ratioIoR, Re, Tr;
-	//float P, RP, TP;
 	float t = INFINITY;
 	float lightHitDistance = INFINITY;
 	float weight;
-	float hitObjectID;
+	float previousObjectID;
 
+	int reflectionBounces = -1;
 	int diffuseCount = 0;
-	int previousIntersecType = -1;
+	int previousIntersecType;
 
-	int coatTypeIntersected = FALSE;
+	int checkModels = FALSE;
 	int sampleLight = FALSE;
 	int bounceIsSpecular = TRUE;
 	int ableToJoinPaths = FALSE;
-	int checkModels = FALSE;
 
 	int willNeedReflectionRay = FALSE;
+	int isReflectionTime = FALSE;
 
 
 	// Light path tracing (from Light source) /////////////////////////////////////////////////////////////////////
@@ -619,33 +620,26 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 	rayOrigin = originalRayOrigin;
 	rayDirection = originalRayDirection;
 	
-	checkModels = TRUE;
 	hitType = -100;
 	hitObjectID = -100.0;
+	checkModels = TRUE;
 
 
 	// Eye path tracing (from Camera) ///////////////////////////////////////////////////////////////////////////
 	
 	for (int bounces = 0; bounces < 6; bounces++)
 	{
-		
+		// if (isReflectionTime == TRUE)
+		// 	reflectionBounces++;
+
+		previousIntersecType = hitType;
+		previousObjectID = hitObjectID;
+
 		t = SceneIntersect(checkModels);
 		
+		// shouldn't happen because we are inside a room, but just in case
 		if (t == INFINITY)
 		{
-			if (willNeedReflectionRay == TRUE)
-			{
-				mask = reflectionMask;
-				rayOrigin = reflectionRayOrigin;
-				rayDirection = reflectionRayDirection;
-
-				willNeedReflectionRay = FALSE;
-				bounceIsSpecular = TRUE;
-				sampleLight = FALSE;
-				diffuseCount = 0;
-				continue;
-			}
-
 			break;
 		}
 		
@@ -656,16 +650,26 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 
 		if (bounces == 0)
 		{
+			objectID = hitObjectID;
+		}
+		if (isReflectionTime == FALSE && diffuseCount == 0 && hitObjectID != previousObjectID)
+		{
 			objectNormal = nl;
 			objectColor = hitColor;
-			objectID = hitObjectID;
 		}
 
 
 		if (hitType == LIGHT)
 		{
-			if (diffuseCount == 0)
-				pixelSharpness = 1.01;
+			if (diffuseCount == 0 && isReflectionTime == FALSE)
+				pixelSharpness = 1.0;
+
+			if (isReflectionTime == TRUE && bounceIsSpecular == TRUE)
+			{
+				objectNormal = nl;
+				//objectColor = hitColor;
+				objectID = hitObjectID;
+			}
 			
 			if (bounceIsSpecular == TRUE || sampleLight == TRUE)
 				accumCol += mask * hitEmission;
@@ -679,7 +683,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				willNeedReflectionRay = FALSE;
 				bounceIsSpecular = TRUE;
 				sampleLight = FALSE;
-				diffuseCount = 0;
+				isReflectionTime = TRUE;
 				continue;
 			}
 			// reached a light, so we can exit
@@ -705,7 +709,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				willNeedReflectionRay = FALSE;
 				bounceIsSpecular = TRUE;
 				sampleLight = FALSE;
-				diffuseCount = 0;
+				isReflectionTime = TRUE;
 				continue;
 			}
 			// reached a light, so we can exit
@@ -726,7 +730,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				willNeedReflectionRay = FALSE;
 				bounceIsSpecular = TRUE;
 				sampleLight = FALSE;
-				diffuseCount = 0;
+				isReflectionTime = TRUE;
 				continue;
 			}
 
@@ -760,12 +764,11 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				hitColor *= (textureColor * textureColor);
 			}
 
-			if (bounces == 0 || (diffuseCount == 0 && coatTypeIntersected == FALSE && previousIntersecType == SPEC))	
+			// hitColor will have changed
+			if (bounces == 0)	
 				objectColor = hitColor;
 
 			diffuseCount++;
-			
-			previousIntersecType = DIFF;
 
 			mask *= hitColor;
 
@@ -795,13 +798,13 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 		
 		if (hitType == SPEC)  // Ideal SPECULAR reflection
 		{
-			previousIntersecType = SPEC;
-
+		
 			mask *= hitColor;
 			
 			if (hitIsModel == TRUE)
 				nl = perturbNormal(nl, vec2(0.15, 0.15), hitUV * 2.0);
 
+			// objectNormal will have changed
 			if (bounces == 0)
 				objectNormal = nl;
 
@@ -815,17 +818,19 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 		
 		if (hitType == REFR)  // Ideal dielectric refraction
 		{	
-			pixelSharpness = diffuseCount == 0 ? -1.0 : pixelSharpness;
-
 			nc = 1.0; // IOR of Air
 			nt = 1.5; // IOR of common Glass
 			Re = calcFresnelReflectance(rayDirection, n, nc, nt, ratioIoR);
 			Tr = 1.0 - Re;
-			// P  = 0.25 + (0.5 * Re);
-                	// RP = Re / P;
-                	// TP = Tr / (1.0 - P);
 
-			if (bounces == 0 || (bounces == 1 && hitObjectID != objectID && bounceIsSpecular == TRUE))
+			if (Re == 1.0)
+			{
+				rayDirection = reflect(rayDirection, nl);
+				rayOrigin = x + nl * uEPS_intersect;
+				continue;
+			}
+			
+			if (diffuseCount == 0 && hitObjectID != previousObjectID && n == nl)
 			{
 				reflectionMask = mask * Re;
 				reflectionRayDirection = reflect(rayDirection, nl); // reflect ray from surface
@@ -833,30 +838,15 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				willNeedReflectionRay = TRUE;
 			}
 
-			if (Re == 1.0)
-			{
-				mask = reflectionMask;
-				rayOrigin = reflectionRayOrigin;
-				rayDirection = reflectionRayDirection;
-
-				willNeedReflectionRay = FALSE;
-				bounceIsSpecular = TRUE;
-				sampleLight = FALSE;
-				continue;
-			}
-
 			// transmit ray through surface
 			
-			if (previousIntersecType == DIFF) 
+			if (previousIntersecType == LIGHTWOOD) 
 				mask *= 4.0;
-		
-			previousIntersecType = REFR;
 		
 			mask *= Tr;
 			mask *= hitColor;
 
-			tdir = refract(rayDirection, nl, ratioIoR);
-			rayDirection = tdir;
+			rayDirection = refract(rayDirection, nl, ratioIoR);
 			rayOrigin = x - nl * uEPS_intersect;
 
 			continue;
@@ -865,17 +855,12 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 		
 		if (hitType == COAT || hitType == CHECK)  // Diffuse object underneath with ClearCoat on top
 		{	
-			coatTypeIntersected = TRUE;
-
 			nc = 1.0; // IOR of Air
 			nt = 1.4; // IOR of ClearCoat
 			Re = calcFresnelReflectance(rayDirection, nl, nc, nt, ratioIoR);
 			Tr = 1.0 - Re;
-			// P  = 0.25 + (0.5 * Re);
-                	// RP = Re / P;
-                	// TP = Tr / (1.0 - P);
-
-			if (bounces == 0 || (bounces == 1 && hitObjectID != objectID && bounceIsSpecular == TRUE))
+			
+			if (diffuseCount == 0 && hitObjectID != previousObjectID)
 			{
 				reflectionMask = mask * Re;
 				reflectionRayDirection = randomDirectionInSpecularLobe(reflect(rayDirection, nl), hitRoughness);
@@ -898,17 +883,15 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				hitColor *= (textureColor * textureColor);		
 			}
 
-			if (bounces == 0)
+			// hitColor will have changed
+			if (bounces == 0 || (bounces == 1 && previousIntersecType == SPEC))
 				objectColor = hitColor;
 			
 			diffuseCount++;
 
-			previousIntersecType = COAT;
-
 			bounceIsSpecular = FALSE;
 
-			if (bounces == 0)
-				mask *= Tr;
+			mask *= Tr;
 			mask *= hitColor;
 			
 			if (diffuseCount == 1 && rand() < 0.5)
@@ -934,7 +917,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				
 		} //end if (hitType == COAT)
 		
-	} // end for (int bounces = 0; bounces < 5; bounces++)
+	} // end for (int bounces = 0; bounces < 6; bounces++)
 	
 	
 	return max(vec3(0), accumCol);
