@@ -295,14 +295,12 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 	vec3 reflectionRayOrigin = vec3(0);
 	vec3 reflectionRayDirection = vec3(0);
 	vec3 dirToLight;
-	vec3 tdir;
 	vec3 x, n, nl;
 	vec3 absorptionCoefficient;
 	vec3 skyColor;
 	
 	float t;
 	float nc, nt, ratioIoR, Re, Tr;
-	//float P, RP, TP;
 	float weight;
 	float thickness = 0.1;
 	float scatteringDistance;
@@ -311,7 +309,6 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 	int previousIntersecType = -100;
 	hitType = -100;
 
-	int coatTypeIntersected = FALSE;
 	int bounceIsSpecular = TRUE;
 	int sampleLight = FALSE;
 	int isRayExiting = FALSE;
@@ -332,30 +329,12 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 
 			if (bounces == 0) // ray hits sky first
 			{
-				pixelSharpness = 1.01;
-				//skyHit = TRUE;
-				//firstX = skyPos;
+				pixelSharpness = 1.0;
+				
 				accumCol += skyColor;
 				break; // exit early	
 			}
-			else if (diffuseCount == 0 && bounceIsSpecular == TRUE)
-			{
-				if (coatTypeIntersected == TRUE)
-				{
-					if (dot(rayDirection, uSunDirection) > 0.995)
-					pixelSharpness = 1.01;
-				}
-				else
-					pixelSharpness = 1.01;
-				//skyHit = TRUE;
-				//firstX = skyPos;
-				accumCol += mask * skyColor;
-			}
 			else if (sampleLight == TRUE)
-			{
-				accumCol += mask * skyColor;
-			}
-			else if (diffuseCount == 1 && previousIntersecType == REFR && bounceIsSpecular == TRUE)
 			{
 				accumCol += mask * skyColor;
 			}
@@ -365,18 +344,6 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				accumCol += mask * skyColor * weight;
 			}
 
-			if (willNeedReflectionRay == TRUE)
-			{
-				mask = reflectionMask;
-				rayOrigin = reflectionRayOrigin;
-				rayDirection = reflectionRayDirection;
-
-				willNeedReflectionRay = FALSE;
-				bounceIsSpecular = TRUE;
-				sampleLight = FALSE;
-				diffuseCount = 0;
-				continue;
-			}
 					
 			// reached the sky light, so we can exit
 			break;
@@ -394,63 +361,13 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 			objectColor = hitColor;
 			objectID = hitObjectID;
 		}
-		if (bounces == 1 && previousIntersecType == SPEC)
-		{
-			objectNormal = nl;
-		}
-
-		
-		
-		/* if (hitType == LIGHT)
-		{	
-			if (bounces == 0 || (bounces == 1 && previousIntersecType == SPEC))
-				pixelSharpness = 1.01;
-
-			if (diffuseCount == 0)
-			{
-				objectNormal = nl;
-				objectColor = hitColor;
-				objectID = hitObjectID;
-			}
-			
-			if (bounceIsSpecular == TRUE || sampleLight == TRUE)
-				accumCol += mask * hitColor;
-
-			if (willNeedReflectionRay == TRUE)
-			{
-				mask = reflectionMask;
-				rayOrigin = reflectionRayOrigin;
-				rayDirection = reflectionRayDirection;
-
-				willNeedReflectionRay = FALSE;
-				bounceIsSpecular = TRUE;
-				sampleLight = FALSE;
-				diffuseCount = 0;
-				continue;
-			}
-			// reached a light, so we can exit
-			break;
-
-		} // end if (hitType == LIGHT) */
 
 
 		// if we get here and sampleLight is still TRUE, shadow ray failed to find the light source 
 		// the ray hit an occluding object along its way to the light
 		if (sampleLight == TRUE)
 		{
-			if (willNeedReflectionRay == TRUE)
-			{
-				mask = reflectionMask;
-				rayOrigin = reflectionRayOrigin;
-				rayDirection = reflectionRayDirection;
-
-				willNeedReflectionRay = FALSE;
-				bounceIsSpecular = TRUE;
-				sampleLight = FALSE;
-				diffuseCount = 0;
-				continue;
-			}
-
+		
 			break;
 		}
 		
