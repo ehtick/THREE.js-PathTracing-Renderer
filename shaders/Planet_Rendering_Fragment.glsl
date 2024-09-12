@@ -701,24 +701,19 @@ vec3 CalculateRadiance()
 			Re = calcFresnelReflectance(rayDirection, n, nc, nt, ratioIoR);
 			Tr = 1.0 - Re;
 
+			if (Re == 1.0)
+			{
+				rayDirection = reflect(rayDirection, nl);
+				rayOrigin = x + nl * uEPS_intersect;
+				continue;
+			}
+
 			if (bounces == 0)
 			{
 				reflectionMask = mask * Re;
 				reflectionRayDirection = reflect(rayDirection, nl); // reflect ray from surface
 				reflectionRayOrigin = x + nl * uEPS_intersect;
 				willNeedReflectionRay = TRUE;
-			}
-
-			if (Re == 1.0)
-			{
-				mask = reflectionMask;
-				rayOrigin = reflectionRayOrigin;
-				rayDirection = reflectionRayDirection;
-
-				willNeedReflectionRay = FALSE;
-				bounceIsSpecular = TRUE;
-				//sampleLight = FALSE;
-				continue;
 			}
 			
 			// transmit ray through surface
