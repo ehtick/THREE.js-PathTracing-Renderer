@@ -384,7 +384,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 
 	int sampleLight = FALSE;
 
-	pixelSharpness = 1.01;
+	pixelSharpness = 1.0;
 	objectID = -INFINITY;
 
 
@@ -579,8 +579,6 @@ void main( void )
 		currentPixel.rgb *= 0.5; // brightness of new image (noisy)
 	}
 
-	currentPixel.a = 1.01;
 
-
-	pc_fragColor = vec4(previousPixel.rgb + currentPixel.rgb, currentPixel.a);
+	pc_fragColor = vec4(previousPixel.rgb + currentPixel.rgb, 1.0);
 }
