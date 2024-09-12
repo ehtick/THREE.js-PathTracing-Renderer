@@ -229,7 +229,13 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 		t = SceneIntersect();
 		
 		if (t == INFINITY)
+		{
+			// this makes the object edges sharp against the black background
+			if (bounces == 0 || (bounces == 1 && previousIntersecType == SPEC))
+				pixelSharpness = 1.01;
+				
 			break;
+		}
 
 		// useful data 
 		n = normalize(hitNormal);
@@ -251,7 +257,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 		if (hitType == LIGHT)
 		{	
 			if (diffuseCount == 0)
-				pixelSharpness = 1.01;
+				pixelSharpness = 1.0;
 			
 			if (sampleLight == TRUE)
 				accumCol = mask * hitEmission * max(0.0, dot(-rayDirection, nl));
