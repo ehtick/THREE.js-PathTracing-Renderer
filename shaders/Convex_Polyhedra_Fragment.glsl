@@ -68,6 +68,12 @@ float SceneIntersect( )
 	
 	hitObjectID = -INFINITY;
 
+	// must first initialize all planes to 0, otherwise garbage values might be loaded and used (especially on mobile)
+	planes[0] = vec4(0); planes[1] = vec4(0); planes[2] = vec4(0); planes[3] = vec4(0);
+	planes[4] = vec4(0); planes[5] = vec4(0); planes[6] = vec4(0); planes[7] = vec4(0);
+	planes[8] = vec4(0); planes[9] = vec4(0); planes[10] = vec4(0); planes[11] = vec4(0);
+	planes[12] = vec4(0); planes[13] = vec4(0); planes[14] = vec4(0); planes[15] = vec4(0);
+	planes[16] = vec4(0); planes[17] = vec4(0); planes[18] = vec4(0); planes[19] = vec4(0);
 	
 	// TETRAHEDRON - 4 faces
 	// transform ray into convexPolyhedron's object space
