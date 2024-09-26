@@ -507,14 +507,7 @@ void main( void )
                 previousColor *= 0.6; // motion-blur trail amount (old image)
                 pixelColor *= 0.4; // brightness of new image (noisy)
         }
-
-	// if current raytraced pixel didn't return any color value, just use the previous frame's pixel color
-	/* if (pixelColor == vec3(0.0))
-	{
-		pixelColor = previousColor;
-		previousColor *= 0.5;
-		pixelColor *= 0.5;
-	} */
+	
         
         pc_fragColor = vec4( pixelColor + previousColor, 1.01);		
 }
