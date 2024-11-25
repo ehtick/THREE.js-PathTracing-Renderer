@@ -368,7 +368,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				mask = reflectionMask;
 				rayOrigin = reflectionRayOrigin;
 				rayDirection = reflectionRayDirection;
-
+				diffuseCount = 0;
 				willNeedReflectionRay = FALSE;
 				bounceIsSpecular = TRUE;
 				sampleLight = FALSE;
@@ -428,7 +428,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				mask = reflectionMask;
 				rayOrigin = reflectionRayOrigin;
 				rayDirection = reflectionRayDirection;
-
+				diffuseCount = 0;
 				willNeedReflectionRay = FALSE;
 				bounceIsSpecular = TRUE;
 				sampleLight = FALSE;
@@ -448,7 +448,7 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 				mask = reflectionMask;
 				rayOrigin = reflectionRayOrigin;
 				rayDirection = reflectionRayDirection;
-
+				diffuseCount = 0;
 				willNeedReflectionRay = FALSE;
 				bounceIsSpecular = TRUE;
 				sampleLight = FALSE;
