@@ -643,7 +643,7 @@ void main( void )
 	blueNoise = texelFetch(tBlueNoiseTexture, ivec2(mod(floor(gl_FragCoord.xy), 128.0)), 0).r;
 
 	vec2 pixelOffset = vec2( tentFilter(rand()), tentFilter(rand()) );
-	pixelOffset *= 0.5;//uCameraIsMoving ? 0.5 : 0.75;
+	pixelOffset *= 0.5;//uCameraIsMoving ? 0.5 : 1.0;
 
 	// we must map pixelPos into the range -1.0 to +1.0
 	vec2 pixelPos = ((gl_FragCoord.xy + vec2(0.5) + pixelOffset) / uResolution) * 2.0 - 1.0;
@@ -700,8 +700,8 @@ void main( void )
 
 	if (uCameraIsMoving) // camera is currently moving
 	{
-		previousPixel.rgb *= 0.5; // motion-blur trail amount (old image)
-		currentPixel.rgb *= 0.5; // brightness of new image (noisy)
+		previousPixel.rgb *= 0.6; // motion-blur trail amount (old image)
+		currentPixel.rgb *= 0.4; // brightness of new image (noisy)
 
 		previousPixel.a = 0.0;
 	}
@@ -726,12 +726,8 @@ void main( void )
 	}
 
 	// makes sharp edges more stable
-	if (!uCameraIsMoving && previousPixel.a == 1.0)
-	{
-		if (pixelSharpness > 0.0)
-			currentPixel.a = 1.01;
-		else currentPixel.a = 1.0;
-	}
+	if (previousPixel.a == 1.0)
+		currentPixel.a = 1.0;
 		
 	// for dynamic scenes (to clear out old, dark, sharp pixel trails left behind from moving objects)
 	if (previousPixel.a == 1.0 && rng() < 0.05)
