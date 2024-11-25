@@ -295,7 +295,6 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 	int previousIntersecType = -100;
 	hitType = -100;
 
-	int coatTypeIntersected = FALSE;
 	int bounceIsSpecular = TRUE;
 	int sampleLight = FALSE;
 	int willNeedReflectionRay = FALSE;
@@ -433,16 +432,20 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 		
 		if (hitType == SPEC)  // Ideal SPECULAR reflection
 		{
-			mask *= hitColor;
-			mask *= 1.25;
 
-			if (diffuseCount == 0 && rand() >= hitRoughness)
+			mask *= hitColor;
+
+			if (diffuseCount == 0 && rand() > (hitRoughness * hitRoughness))
 			{
+				mask *= 1.1;
 				rayDirection = reflect(rayDirection, nl); // reflect ray from metal surface
-				rayDirection = randomDirectionInSpecularLobe(rayDirection, hitRoughness * 0.9);
+				rayDirection = randomDirectionInSpecularLobe(rayDirection, hitRoughness == 0.1 ? 0.2 : hitRoughness * 0.8);
 				rayOrigin = x + nl * uEPS_intersect;
 				continue;
 			}
+
+			if (diffuseCount == 0)
+				mask /= max(0.7, 1.0 - (hitRoughness * hitRoughness));
 
 			diffuseCount++;
 			
@@ -514,8 +517,6 @@ vec3 CalculateRadiance( out vec3 objectNormal, out vec3 objectColor, out float o
 		
 		if (hitType == COAT)  // Diffuse object underneath with ClearCoat on top
 		{
-			coatTypeIntersected = TRUE;
-
 			nc = 1.0; // IOR of Air
 			nt = 1.5; // IOR of Clear Coat
 			Re = calcFresnelReflectance(rayDirection, nl, nc, nt, ratioIoR);
